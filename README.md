@@ -1,4 +1,4 @@
-# 🚀 Customer Churn MLOps Pipeline
+# Customer Churn MLOps Pipeline
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](tests/)
@@ -8,7 +8,7 @@
 
 A **production-ready, end-to-end MLOps system** for predicting customer churn in telecommunications. Built with industry best practices, this pipeline demonstrates a complete machine learning workflow from data ingestion to model deployment, featuring experiment tracking, automated retraining, REST API serving, and a user-friendly web interface.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Why This Project?](#why-this-project)
@@ -27,7 +27,7 @@ A **production-ready, end-to-end MLOps system** for predicting customer churn in
 - [Contributing](#contributing)
 - [License](#license)
 
-## 🎯 Overview
+## Overview
 
 The **Customer Churn MLOps Pipeline** is a comprehensive machine learning system designed to predict customer churn for telecommunications companies. It implements the complete MLOps lifecycle with production-grade infrastructure, making it suitable for both learning and real-world deployment.
 
@@ -50,7 +50,7 @@ This pipeline:
 6. **Provides** a user-friendly web interface for business users
 7. **Monitors** model performance and enables automated retraining
 
-## 💡 Why This Project?
+## Why This Project?
 
 This project serves as a **complete reference implementation** for MLOps best practices:
 
@@ -72,9 +72,9 @@ This project serves as a **complete reference implementation** for MLOps best pr
 - **Professional Quality**: Production-ready code with proper documentation
 - **Modern Stack**: Uses current industry-standard tools and frameworks
 
-## ✨ Key Features
+## Key Features
 
-### 🔄 Complete MLOps Lifecycle
+### Complete MLOps Lifecycle
 - **Data Pipeline**: Automated data loading, validation, and preprocessing
 - **Model Training**: Configurable Random Forest with hyperparameter tuning
 - **Experiment Tracking**: MLflow integration for reproducibility
@@ -83,13 +83,13 @@ This project serves as a **complete reference implementation** for MLOps best pr
 - **User Interface**: Streamlit web app for non-technical users
 - **Monitoring**: Comprehensive logging and health checks
 
-### 🧪 Rigorous Testing
+### Rigorous Testing
 - **Property-Based Testing**: 31 universal properties tested with Hypothesis
 - **Unit Tests**: 150+ tests covering all components
 - **Integration Tests**: End-to-end workflow validation
 - **80%+ Coverage**: Comprehensive test coverage across the codebase
 
-### 🐳 Production-Ready Infrastructure
+### Production-Ready Infrastructure
 - **Containerization**: Docker images for all services
 - **Orchestration**: Docker Compose for multi-service deployment
 - **Configuration Management**: Environment-based configuration with sensible defaults
@@ -97,21 +97,21 @@ This project serves as a **complete reference implementation** for MLOps best pr
 - **Error Handling**: Comprehensive error handling with custom exception classes
 - **Health Checks**: Service health monitoring and readiness probes
 
-### 📊 MLflow Integration
+### MLflow Integration
 - **Experiment Tracking**: Log parameters, metrics, and artifacts
 - **Model Registry**: Version control for trained models
 - **Artifact Storage**: Store models, pipelines, and visualizations
 - **Model Comparison**: Compare experiments and select best models
 - **Stage Management**: Promote models through Staging to Production
 
-### 🎨 User-Friendly Interfaces
+### User-Friendly Interfaces
 - **REST API**: FastAPI with automatic OpenAPI documentation
 - **Web UI**: Streamlit interface with form-based input
 - **Risk Classification**: Color-coded risk levels (Low/Medium/High)
 - **Real-Time Predictions**: Sub-second response times
 - **Error Messages**: User-friendly error handling and validation
 
-## 🏗️ Architecture
+## Architecture
 
 The system follows a **layered architecture** with clear separation of concerns:
 
@@ -197,7 +197,7 @@ The system follows a **layered architecture** with clear separation of concerns:
 2. **Logging** captures all operations with timestamps and stack traces
 3. **MLflow UI** provides experiment comparison and model performance tracking
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Core ML & Data
 - **Python 3.9+**: Primary programming language
@@ -262,7 +262,7 @@ customer-churn-mlops-pipeline/
 └── README.md                 # This file
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 Get the entire system running in **under 5 minutes** with Docker:
 
@@ -280,7 +280,7 @@ docker-compose ps
 # 4. Access the applications
 ```
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 
@@ -374,7 +374,7 @@ Place your `telco_churn.csv` dataset in the `data/raw/` directory, or use the pr
 python scripts/generate_sample_data.py
 ```
 
-## 📖 Usage Guide
+## Usage Guide
 
 ### Training a New Model
 
