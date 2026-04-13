@@ -1,0 +1,235 @@
+# Docker Compose configuration for Customer Churn MLOps Pipeline
+# Task 12.4: Create docker-compose.yml
+
+version: '3.8'
+
+services:
+  # PostgreSQL database for Airflow
+  postgres:
+    image: postgres:13
+    container_name: churn-postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - churn-network
+
+  # MLflow tracking server
+  mlflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.mlflow
+    container_name: churn-mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-artifacts:/mlflow/artifacts
+      - mlflow-backend:/mlflow/backend
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - churn-network
+    restart: unless-stopped
+
+  # Prediction API service
+  prediction-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: churn-prediction-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_ARTIFACT_ROOT=/mlflow/artifacts
+      - MODEL_NAME=churn_model
+      - MODEL_STAGE=Production
+      - MODEL_PATH=/app/models
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - API_WORKERS=4
+      - LOG_LEVEL=INFO
+      - LOG_PATH=/app/logs
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health', timeout=5).raise_for_status()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - churn-network
+    restart: unless-stopped
+
+  # Streamlit UI service
+  streamlit-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    container_name: churn-streamlit-ui
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./logs:/app/logs
+    environment:
+      - API_URL=http://prediction-api:8000
+      - UI_PORT=8501
+      - LOG_LEVEL=INFO
+      - LOG_PATH=/app/logs
+    depends_on:
+      prediction-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - churn-network
+    restart: unless-stopped
+
+  # Airflow webserver
+  airflow-webserver:
+    image: apache/airflow:2.7.3-python3.9
+    container_name: churn-airflow-webserver
+    command: webserver
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./data:/opt/airflow/data
+      - ./models:/opt/airflow/models
+      - ./src:/opt/airflow/src
+      - ./requirements.txt:/opt/airflow/requirements.txt
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__WEBSERVER__SECRET_KEY=secret
+      - AIRFLOW_HOME=/opt/airflow
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - PYTHONPATH=/opt/airflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - churn-network
+    restart: unless-stopped
+
+  # Airflow scheduler
+  airflow-scheduler:
+    image: apache/airflow:2.7.3-python3.9
+    container_name: churn-airflow-scheduler
+    command: scheduler
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./data:/opt/airflow/data
+      - ./models:/opt/airflow/models
+      - ./src:/opt/airflow/src
+      - ./requirements.txt:/opt/airflow/requirements.txt
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW_HOME=/opt/airflow
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - PYTHONPATH=/opt/airflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
+      airflow-webserver:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "airflow jobs check --job-type SchedulerJob --hostname $(hostname)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - churn-network
+    restart: unless-stopped
+
+  # Airflow init service (runs once to initialize database)
+  airflow-init:
+    image: apache/airflow:2.7.3-python3.9
+    container_name: churn-airflow-init
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db init
+        airflow users create \
+          --username admin \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@example.com \
+          --password admin
+        pip install -r /opt/airflow/requirements.txt
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./requirements.txt:/opt/airflow/requirements.txt
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW_HOME=/opt/airflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - churn-network
+
+# Define networks
+networks:
+  churn-network:
+    driver: bridge
+    name: churn-network
+
+# Define volumes
+volumes:
+  postgres-data:
+    name: churn-postgres-data
+  mlflow-artifacts:
+    name: churn-mlflow-artifacts
+  mlflow-backend:
+    name: churn-mlflow-backend

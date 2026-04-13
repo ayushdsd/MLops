@@ -1,0 +1,74 @@
+# Docker ignore file to optimize build context
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.hypothesis/
+.benchmarks/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# Logs
+logs/*.log
+
+# Data (will be mounted as volumes)
+data/raw/*.csv
+data/processed/*
+
+# Models (will be mounted as volumes)
+models/*.pkl
+models/pipelines/*.pkl
+
+# Kiro specs
+.kiro/
+
+# Airflow
+dags/
+
+# Notebooks
+notebooks/
+
+# Examples
+examples/
+
+# Environment
+.env
+.env.local
+
+# Docker
+docker-compose.yml
+Dockerfile*
